@@ -4,7 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-const { PORT, assertEnv } = require("./utils/env");
+const { PORT, assertEnv, FRONTEND_URL } = require("./utils/env");
 const { ensureIndexReady } = require("./services/pineconeService");
 const { handleUpload, UPLOAD_ROOT } = require("./controllers/uploadController");
 const { handleChat } = require("./controllers/chatController");
@@ -15,11 +15,11 @@ fs.mkdirSync(UPLOAD_ROOT, { recursive: true });
 const app = express();
 app.use(
   cors({
-    origin: true,
+    origin: FRONTEND_URL,
     credentials: true,
   })
 );
-app.use(express.json({ limit: "2mb" }));
+app.use(express.json({ limit: "20mb" }));
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_ROOT),

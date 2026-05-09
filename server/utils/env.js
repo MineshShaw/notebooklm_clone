@@ -7,6 +7,7 @@ const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME || "";
 const PINECONE_CLOUD = process.env.PINECONE_CLOUD || "aws";
 const PINECONE_REGION = process.env.PINECONE_REGION || "us-east-1";
 const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY || "";
+const FRONTEND_URL = process.env.FRONEND_URL || "http://localhost:3000";
 
 /** Dimension for all-MiniLM-L6-v2 embeddings */
 const EMBEDDING_DIMENSION = 384;
@@ -16,6 +17,7 @@ function assertEnv() {
   if (!GROQ_API_KEY) missing.push("GROQ_API_KEY");
   if (!PINECONE_API_KEY) missing.push("PINECONE_API_KEY");
   if (!PINECONE_INDEX_NAME) missing.push("PINECONE_INDEX_NAME");
+  if (!FRONTEND_URL) missing.push("FRONTEND_URL");
   if (missing.length) {
     throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
   }
