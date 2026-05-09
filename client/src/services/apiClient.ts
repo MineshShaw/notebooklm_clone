@@ -9,6 +9,7 @@ const baseURL =
 const client = axios.create({
   baseURL,
   timeout: 120000,
+  withCredentials: true,
 });
 
 export async function uploadFile(file: File): Promise<UploadedFileMeta> {

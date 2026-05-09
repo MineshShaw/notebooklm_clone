@@ -6,7 +6,6 @@ const PINECONE_API_KEY = process.env.PINECONE_API_KEY || "";
 const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME || "";
 const PINECONE_CLOUD = process.env.PINECONE_CLOUD || "aws";
 const PINECONE_REGION = process.env.PINECONE_REGION || "us-east-1";
-const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY || "";
 const FRONTEND_URL = process.env.FRONEND_URL || "http://localhost:3000";
 
 /** Dimension for all-MiniLM-L6-v2 embeddings */
@@ -30,7 +29,7 @@ module.exports = {
   PINECONE_INDEX_NAME,
   PINECONE_CLOUD,
   PINECONE_REGION,
-  HUGGINGFACE_API_KEY,
+  FRONTEND_URL,
   EMBEDDING_DIMENSION,
   assertEnv,
 };
