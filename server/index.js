@@ -76,7 +76,7 @@ async function start() {
   assertEnv();
   await ensureIndexReady();
   app.listen(PORT, () => {
-    console.log(`API listening on http://localhost:${PORT}`);
+    console.log(`API listening on ${FRONTEND_URL.replace(/\/$/, "")}:${PORT}`);
   });
 }
 
