@@ -37,17 +37,29 @@ const upload = multer({
   storage,
   limits: { fileSize: 32 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const name = file.originalname || "";
+    const name = (file.originalname || "").toLowerCase();
+
+    const okExt =
+      /\.(pdf|txt|csv|docx|xlsx)$/i.test(name);
+
     const okMime =
       file.mimetype === "application/pdf" ||
       file.mimetype === "text/plain" ||
+      file.mimetype === "text/csv" ||
+      file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      file.mimetype === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
       file.mimetype === "application/octet-stream";
-    const okExt = /\.(pdf|txt)$/i.test(name);
-    if ((okMime || okExt) && /\.(pdf|txt)$/i.test(name)) {
+
+    if (okExt || okMime) {
       return cb(null, true);
     }
-    cb(new Error("Only PDF and TXT files are allowed."));
-  },
+
+    cb(
+      new Error(
+        "Only PDF, TXT, CSV, DOCX, XLSX files are allowed."
+      )
+    );
+  }
 });
 
 app.get("/health", (_req, res) => {
@@ -76,7 +88,7 @@ async function start() {
   assertEnv();
   await ensureIndexReady();
   app.listen(PORT, () => {
-    console.log(`API listening on ${FRONTEND_URL.replace(/\/$/, "")}:${PORT}`);
+    console.log(`API listening to ${FRONTEND_URL.replace(/\/$/, "")} on port ${PORT}`);
   });
 }
 

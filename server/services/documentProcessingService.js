@@ -1,6 +1,8 @@
 const fs = require("fs/promises");
 const path = require("path");
 const pdfParse = require("pdf-parse");
+const mammoth = require("mammoth");
+
 const { v4: uuidv4 } = require("uuid");
 const { chunkText } = require("./chunkingService");
 const { embedDocuments } = require("./embeddingsService");
@@ -11,17 +13,42 @@ const { upsertVectors } = require("./pineconeService");
  * @param {string} mimeOrExt
  */
 async function extractTextFromFile(filePath, mimeOrExt) {
+
   const lower = (mimeOrExt || "").toLowerCase();
   const ext = path.extname(filePath).toLowerCase();
+
   if (lower.includes("pdf") || ext === ".pdf") {
     const buf = await fs.readFile(filePath);
     const data = await pdfParse(buf);
+
     return (data.text || "").trim();
   }
+
   if (lower.includes("text") || ext === ".txt") {
     return (await fs.readFile(filePath, "utf8")).trim();
   }
-  throw new Error("Unsupported file type. Only PDF and TXT are allowed.");
+
+  if (lower.includes("word") || ext === ".docx") {
+    const result = await mammoth.extractRawText({ path: filePath });
+
+    return (result.value || "").trim();
+  }
+
+  if (lower.includes("csv") || ext === ".csv") {
+
+    const raw = await fs.readFile(filePath, "utf8");
+
+    const normalized = raw
+      .split("\n")
+      .map(line => line.replace(/,/g, " "))
+      .join("\n");
+
+    return normalized.trim();
+  }
+
+  throw new Error(
+    "Unsupported file type. Allowed: PDF, TXT, DOCX, CSV"
+  );
 }
 
 /**

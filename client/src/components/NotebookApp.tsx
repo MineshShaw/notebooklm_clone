@@ -38,8 +38,12 @@ export function NotebookApp() {
   const handleUpload = useCallback(
     async (file: File) => {
       const lower = file.name.toLowerCase();
-      if (!lower.endsWith(".pdf") && !lower.endsWith(".txt")) {
-        setError("Only PDF and TXT files are supported.");
+      if (!lower.endsWith(".pdf") && file.type !== "application/pdf"
+        && !lower.endsWith(".txt") && file.type !== "text/plain"
+        && !lower.endsWith(".csv") && file.type !== "text/csv" && !lower.endsWith(".xlsx") && file.type !== "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        && !lower.endsWith(".docx") && file.type !== "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      ) {
+        setError("Only PDF, CSV, XLSX, DOCX, and TXT files are supported.");
         return;
       }
       setError(null);
@@ -48,6 +52,7 @@ export function NotebookApp() {
         const meta = await uploadFile(file);
         addFile(meta);
       } catch (e: unknown) {
+        console.error("Upload error:", e);
         const msg =
           e && typeof e === "object" && "response" in e
             ? String(
@@ -198,36 +203,38 @@ export function NotebookApp() {
           </p>
         </header>
 
-        {files.length === 0 && (
-          <section className="shrink-0 space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Upload
-            </h2>
-            <UploadZone
-              onFileSelected={handleUpload}
-              uploading={uploading}
-              disabled={busyFileId !== null}
-            />
-          </section>
-        )}
+        <section className="">
+          {files.length === 0 && (
+            <section className="shrink-0 space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Upload
+              </h2>
+              <UploadZone
+                onFileSelected={handleUpload}
+                uploading={uploading}
+                disabled={busyFileId !== null}
+              />
+            </section>
+          )}
 
-        <section className="flex min-h-0 flex-1 flex-col gap-3">
-          <h2 className="shrink-0 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Chat
-          </h2>
-          <div className="flex min-h-[min(60vh,520px)] flex-1 flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
-            {error && (
-              <div className="mb-3 shrink-0 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
-                {error}
-              </div>
-            )}
-            <ChatPanel
-              messages={messages}
-              onSend={handleSend}
-              loading={chatLoading}
-              canSend={canSend}
-            />
-          </div>
+          <section className="flex min-h-0 flex-1 flex-col gap-3">
+            <h2 className="shrink-0 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Chat
+            </h2>
+            <div className="flex min-h-[min(60vh,520px)] flex-1 flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+              {error && (
+                <div className="mb-3 shrink-0 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+                  {error}
+                </div>
+              )}
+              <ChatPanel
+                messages={messages}
+                onSend={handleSend}
+                loading={chatLoading}
+                canSend={canSend}
+              />
+            </div>
+          </section>
         </section>
       </main>
     </div>

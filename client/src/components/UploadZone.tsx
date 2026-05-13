@@ -20,7 +20,7 @@ export function UploadZone({ onFileSelected, uploading, disabled }: Props) {
       const f = e.dataTransfer.files?.[0];
       if (f) onFileSelected(f);
     },
-    [disabled, uploading, onFileSelected]
+    [disabled, uploading, onFileSelected],
   );
 
   const onChange = useCallback(
@@ -29,7 +29,7 @@ export function UploadZone({ onFileSelected, uploading, disabled }: Props) {
       if (f) onFileSelected(f);
       e.target.value = "";
     },
-    [onFileSelected]
+    [onFileSelected],
   );
 
   return (
@@ -48,7 +48,7 @@ export function UploadZone({ onFileSelected, uploading, disabled }: Props) {
     >
       <UploadCloud className="mx-auto h-10 w-10 text-zinc-400" />
       <p className="mt-3 text-sm font-medium text-zinc-800 dark:text-zinc-100">
-        Drag & drop PDF or TXT here
+        Drag & drop a document here
       </p>
       <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
         or choose a file from your device
@@ -57,7 +57,7 @@ export function UploadZone({ onFileSelected, uploading, disabled }: Props) {
         {uploading ? "Uploading…" : "Choose file"}
         <input
           type="file"
-          accept=".pdf,.txt,application/pdf,text/plain"
+          accept=".pdf,.txt,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.csv,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx"
           className="hidden"
           disabled={disabled || uploading}
           onChange={onChange}
