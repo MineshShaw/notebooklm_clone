@@ -59,7 +59,7 @@ Upload → Extract text → Chunk (500 chars / 100 overlap)
       → Upsert Pinecone + save local chunk JSON for BM25
 ```
 
-### Backend modules (educational layout)
+### Backend modules
 
 | Service | Role |
 |---------|------|
@@ -353,20 +353,3 @@ notebooklm_clone/
 5. Save the same chunks to `server/data/chunks/{fileId}.json` for BM25.
 
 ---
-
-## Future Improvements
-
-Possible extensions (not implemented):
-
-- **GraphRAG** — knowledge-graph traversal for multi-hop questions
-- **Self-RAG** — model reflects on whether retrieval is needed
-- **Agentic retrieval** — iterative tool-using search loops
-- **Multimodal retrieval** — images, slides, tables in PDFs
-- **Local cross-encoder rerankers** — e.g. `bge-reranker` without LLM rerank cost
-- **Reciprocal Rank Fusion (RRF)** — alternative to weighted score fusion
-
----
-
-## License
-
-ISC (see `server/package.json`).
