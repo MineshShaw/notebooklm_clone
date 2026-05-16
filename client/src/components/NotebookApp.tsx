@@ -213,30 +213,37 @@ export function NotebookApp() {
           </p>
         </header>
 
-        <section className="">
-          {files.length === 0 && (
-            <section className="shrink-0 space-y-3">
+        <section className="flex h-full max-h-full flex-col overflow-hidden">
+          <section
+            className={`min-h-0 overflow-y-auto ${
+              files.length === 0 ? "basis-[30%] shrink-0" : "hidden"
+            }`}
+          >
+            <div className="space-y-3 h-full">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Upload
               </h2>
+
               <UploadZone
                 onFileSelected={handleUpload}
                 uploading={uploading}
                 disabled={busyFileId !== null}
               />
-            </section>
-          )}
+            </div>
+          </section>
 
-          <section className="flex min-h-0 flex-1 flex-col gap-3">
+          <section className={`flex min-h-0 ${files.length === 0 ? "basis-[70%]" : "basis-full"} flex-col overflow-hidden`}>
             <h2 className="shrink-0 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Chat
             </h2>
-            <div className="flex min-h-[min(60vh,520px)] flex-1 flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
+
+            <div className="mt-3 flex min-h-0 flex-1 flex-col rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60">
               {error && (
                 <div className="mb-3 shrink-0 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
                   {error}
                 </div>
               )}
+
               <ChatPanel
                 messages={messages}
                 onSend={handleSend}

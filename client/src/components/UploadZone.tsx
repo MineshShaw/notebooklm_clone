@@ -40,7 +40,7 @@ export function UploadZone({ onFileSelected, uploading, disabled }: Props) {
       }}
       onDragLeave={() => setDrag(false)}
       onDrop={onDrop}
-      className={`relative rounded-2xl border-2 border-dashed px-6 py-10 text-center transition ${
+      className={`relative rounded-2xl border-2 border-dashed px-6 py-5 text-center transition ${
         drag
           ? "border-emerald-500 bg-emerald-50/60 dark:border-emerald-400 dark:bg-emerald-950/30"
           : "border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/40"
