@@ -36,7 +36,21 @@ export function ChatPanel({
     <div className="flex min-h-0 flex-1 flex-col">
       <div
         ref={scrollRef}
-        className="min-h-0 flex-1 space-y-4 overflow-y-auto px-1 py-2"
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto 
+                  [&::-webkit-scrollbar]:w-1.5
+                  [&::-webkit-scrollbar-track]:bg-transparent
+                  [&::-webkit-scrollbar-thumb]:bg-emerald-500/70
+                  [&::-webkit-scrollbar-thumb]:rounded-full
+                  hover:[&::-webkit-scrollbar-thumb]:bg-emerald-400
+                  [&::-webkit-scrollbar-thumb]:border
+                  [&::-webkit-scrollbar-thumb]:border-transparent
+                  [&::-webkit-scrollbar-thumb]:bg-clip-padding
+                  [&::-webkit-scrollbar-thumb]:transition-colors
+                  [&::-webkit-scrollbar-thumb]:duration-300
+                  [&::-webkit-scrollbar-thumb]:ease-in-out
+                  dark:[&::-webkit-scrollbar-thumb]:bg-emerald-400/70
+                  dark:hover:[&::-webkit-scrollbar-thumb]:bg-emerald-300/70
+                  dark:[&::-webkit-scrollbar-thumb]:border"
       >
         {messages.length === 0 && !loading && (
           <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center dark:border-zinc-800 dark:bg-zinc-900/40">
