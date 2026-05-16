@@ -21,10 +21,32 @@ export async function uploadFile(file: File): Promise<UploadedFileMeta> {
   return data;
 }
 
+export type ConversationTurn = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 export async function chatRequest(body: {
   message: string;
   selectedFileIds: string[];
-}): Promise<{ answer: string; sources: SourceChunk[] }> {
+  /** Prior turns (excluding the current message) for query rewriting */
+  conversationHistory?: ConversationTurn[];
+}): Promise<{
+  answer: string;
+  sources: SourceChunk[];
+  debug?: {
+    queryRewrite?: {
+      originalQuery: string;
+      rewrittenQuery: string;
+      rewritten: boolean;
+      skippedReason?: string;
+      error?: string;
+    };
+    retrieval?: Record<string, unknown>;
+    chunkEvaluation?: Record<string, unknown>;
+    generation?: Record<string, unknown>;
+  };
+}> {
   const { data } = await client.post("/api/chat", body);
   return data;
 }

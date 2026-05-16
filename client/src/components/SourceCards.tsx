@@ -23,12 +23,29 @@ export function SourceCards({ sources }: Props) {
             className="rounded-lg border border-zinc-200 bg-white p-3 text-xs dark:border-zinc-700 dark:bg-zinc-950/40"
           >
             <div className="mb-2 flex flex-wrap gap-2 text-[11px] font-medium text-zinc-600 dark:text-zinc-400">
+              {typeof s.citationId === "number" && (
+                <span
+                  className={`rounded-md px-2 py-0.5 ${
+                    s.citedInAnswer
+                      ? "bg-violet-100 text-violet-900 dark:bg-violet-950/60 dark:text-violet-200"
+                      : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                  }`}
+                >
+                  [{s.citationId}]
+                  {s.citedInAnswer ? " cited" : ""}
+                </span>
+              )}
               <span className="rounded-md bg-zinc-100 px-2 py-0.5 dark:bg-zinc-800">
                 {s.fileName}
               </span>
               <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
                 Chunk {s.chunkIndex}
               </span>
+              {typeof s.relevanceScore === "number" && (
+                <span className="rounded-md bg-blue-50 px-2 py-0.5 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300">
+                  Relevance {s.relevanceScore}/10
+                </span>
+              )}
             </div>
             <p className="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300">
               {s.text}

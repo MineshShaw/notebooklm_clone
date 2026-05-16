@@ -1,91 +1,154 @@
-const { Groq } = require("groq-sdk");
 const { embedQuery } = require("./embeddingsService");
-const { queryByFileIds } = require("./pineconeService");
-const { GROQ_API_KEY } = require("../utils/env");
+const { rewriteQueryForRetrieval } = require("./queryRewriteService");
+const { hybridRetrieve } = require("./hybridRetrievalService");
+const { evaluateChunkRelevance } = require("./chunkRelevanceService");
+const {
+  generateGroundedResponse,
+  NOT_FOUND_MESSAGE,
+} = require("./responseGenerationService");
 
-const NOT_FOUND_MESSAGE =
-  "I could not find that information in the uploaded documents.";
+const { RAG_DEBUG } = require("../utils/env");
 
-function getClient() {
-  return new Groq({
-    apiKey: GROQ_API_KEY,
-  });
+/**
+ * Attach full pipeline debug when RAG_DEBUG=true.
+ * @param {object} payload
+ * @param {object} pipeline
+ */
+
+function withRagDebug(payload, pipeline) {
+  if (!RAG_DEBUG) return payload;
+
+  const {
+    rewriteResult,
+    retrievalDebug,
+    chunkEvalDebug,
+    generationDebug,
+  } = pipeline;
+
+  return {
+    ...payload,
+    debug: {
+      queryRewrite: {
+        originalQuery: rewriteResult.originalQuery,
+        rewrittenQuery: rewriteResult.rewrittenQuery,
+        rewritten: rewriteResult.rewritten,
+        skippedReason: rewriteResult.skippedReason,
+        error: rewriteResult.error,
+      },
+      ...(retrievalDebug ? { retrieval: retrievalDebug } : {}),
+      ...(chunkEvalDebug ? { chunkEvaluation: chunkEvalDebug } : {}),
+      ...(generationDebug ? { generation: generationDebug } : {}),
+    },
+  };
 }
 
 /**
+ * Version 2 RAG pipeline:
+ * rewrite → hybrid retrieve → chunk evaluate → grounded generate.
+ *
  * @param {string} question
  * @param {string[]} selectedFileIds
+ * @param {Array<{ role: "user" | "assistant", content: string }>} [conversationHistory]
  */
-async function chatWithDocuments(question, selectedFileIds) {
+
+async function chatWithDocuments(
+  question,
+  selectedFileIds,
+  conversationHistory = [],
+) {
   const trimmedQ = (question || "").trim();
+
   if (!trimmedQ) {
     throw new Error("Message is required.");
   }
+
   const ids = (selectedFileIds || []).filter(Boolean);
+
   if (!ids.length) {
     throw new Error("Select at least one uploaded document.");
   }
 
-  const vector = await embedQuery(trimmedQ);
-  const matches = await queryByFileIds(vector, ids, 12);
+  const rewriteResult = await rewriteQueryForRetrieval({
+    originalQuery: trimmedQ,
+    conversationHistory,
+  });
 
-  const sources = (matches || []).map((m) => {
-    const md = m.metadata || {};
-    return {
-      fileId: String(md.fileId ?? ""),
-      fileName: String(md.fileName ?? ""),
-      chunkIndex:
-        typeof md.chunkIndex === "number" ? md.chunkIndex : Number(md.chunkIndex),
-      text: String(md.text ?? ""),
-      score: typeof m.score === "number" ? m.score : undefined,
-    };
-  }).filter((s) => s.text);
+  const retrievalQuery = rewriteResult.rewrittenQuery;
 
-  if (!sources.length) {
-    return {
-      answer: NOT_FOUND_MESSAGE,
-      sources: [],
-    };
+  const vector = await embedQuery(retrievalQuery);
+
+  const { chunks: retrieved, debug: retrievalDebug } = await hybridRetrieve({
+    query: retrievalQuery,
+    fileIds: ids,
+    queryEmbedding: vector,
+  });
+
+  const candidates = retrieved.map((c) => ({
+    fileId: c.fileId,
+    fileName: c.fileName,
+    chunkIndex: c.chunkIndex,
+    text: c.text,
+    score: typeof c.score === "number" ? c.score : undefined,
+    denseScore: c.denseScore,
+    bm25Score: c.bm25Score,
+    retrievalSources: c.sources,
+  }));
+
+  if (!candidates.length) {
+    return withRagDebug(
+      { answer: NOT_FOUND_MESSAGE, sources: [] },
+      { rewriteResult, retrievalDebug },
+    );
   }
 
-  const contextBlocks = sources.map((s, i) => {
-    return `[Source ${i + 1}] File: ${s.fileName} | Chunk: ${s.chunkIndex}\n${s.text}`;
-  });
-  const context = contextBlocks.join("\n\n---\n\n");
+  const { chunks: filtered, debug: chunkEvalDebug } =
+    await evaluateChunkRelevance({
+      query: retrievalQuery,
+      originalQuery: trimmedQ,
+      candidates,
+    });
 
-  const systemPrompt = `You are a document assistant.
+  const sourcesForGeneration = filtered.map((c) => ({
+    fileId: c.fileId,
+    fileName: c.fileName,
+    chunkIndex: c.chunkIndex,
+    text: c.text,
+    score: c.relevanceScore ?? c.score,
+    relevanceScore: c.relevanceScore,
+    relevanceReason: c.relevanceReason,
+    denseScore: c.denseScore,
+    bm25Score: c.bm25Score,
+    retrievalSources: c.retrievalSources ?? c.sources,
+  }));
 
-Answer ONLY using the provided context below.
+  if (!sourcesForGeneration.length) {
+    return withRagDebug(
+      { answer: NOT_FOUND_MESSAGE, sources: [] },
+      { rewriteResult, retrievalDebug, chunkEvalDebug },
+    );
+  }
 
-Rules:
-- Do not use outside knowledge.
-- If the answer cannot be found in the context, respond with exactly:
-${NOT_FOUND_MESSAGE}
-- Quote or paraphrase only what is supported by the context.`;
+  // Step 5: citation-structured context + grounded generation (third Groq call).
 
-  const userPrompt = `Context from uploaded documents:
-
-${context}
-
-Question: ${trimmedQ}`;
-
-  const groq = getClient();
-  const completion = await groq.chat.completions.create({
-    model: "llama-3.3-70b-versatile",
-    temperature: 0,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-  });
-
-  const answer =
-    completion.choices[0]?.message?.content?.trim() || NOT_FOUND_MESSAGE;
-
-  return {
+  const {
     answer,
     sources,
-  };
+    debug: generationDebug,
+  } = await generateGroundedResponse({
+    question: trimmedQ,
+    sources: sourcesForGeneration,
+    conversationHistory,
+  });
+
+  return withRagDebug(
+    { answer, sources },
+    {
+      rewriteResult,
+      retrievalDebug,
+      chunkEvalDebug,
+      generationDebug,
+    },
+  );
 }
 
 module.exports = {

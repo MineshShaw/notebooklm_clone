@@ -2,6 +2,7 @@ const path = require("path");
 const fs = require("fs/promises");
 const { readAll, removeByFileId } = require("../utils/fileMetadataStore");
 const { deleteByFileId } = require("../services/pineconeService");
+const { deleteChunksForFile } = require("../utils/chunkTextStore");
 
 async function listFiles(_req, res) {
   try {
@@ -31,6 +32,7 @@ async function deleteFile(req, res) {
     }
 
     await deleteByFileId(fileId);
+    await deleteChunksForFile(fileId);
 
     const absPath = path.join(__dirname, "..", removed.storedPath);
     try {

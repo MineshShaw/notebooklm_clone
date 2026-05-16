@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 const { chunkText } = require("./chunkingService");
 const { embedDocuments } = require("./embeddingsService");
 const { upsertVectors } = require("./pineconeService");
+const { saveChunksForFile } = require("../utils/chunkTextStore");
 
 /**
  * @param {string} filePath
@@ -82,6 +83,9 @@ async function processAndIndexDocument(input) {
   }));
 
   await upsertVectors(vectors);
+
+  // Local copy for BM25 — Pinecone holds vectors only; lexical search needs raw text.
+  await saveChunksForFile(fileId, input.originalName, chunks);
 
   const uploadDate = new Date().toISOString();
 

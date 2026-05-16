@@ -29,6 +29,8 @@
 /server/uploads/*
 !/server/uploads/.gitkeep
 /server/data/files.json
+/server/data/chunks/*.json
+!/server/data/chunks/.gitkeep
 
 # debug
 npm-debug.log*

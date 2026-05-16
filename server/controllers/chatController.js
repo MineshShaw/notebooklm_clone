@@ -2,8 +2,12 @@ const { chatWithDocuments } = require("../services/chatService");
 
 async function handleChat(req, res) {
   try {
-    const { message, selectedFileIds } = req.body || {};
-    const result = await chatWithDocuments(message, selectedFileIds);
+    const { message, selectedFileIds, conversationHistory } = req.body || {};
+    const result = await chatWithDocuments(
+      message,
+      selectedFileIds,
+      conversationHistory
+    );
     return res.json(result);
   } catch (err) {
     console.error("Chat error:", err);

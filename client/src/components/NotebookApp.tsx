@@ -133,9 +133,19 @@ export function NotebookApp() {
       setChatLoading(true);
       setError(null);
       try {
+        // Send recent history so the server can resolve pronouns during query rewrite.
+        const conversationHistory = messages
+          .filter((m) => !m.pending && m.content.trim())
+          .slice(-6)
+          .map((m) => ({
+            role: m.role,
+            content: m.content,
+          }));
+
         const { answer, sources } = await chatRequest({
           message: text,
           selectedFileIds: activeFileIds,
+          conversationHistory,
         });
         setMessages((prev) =>
           prev.map((m) =>
